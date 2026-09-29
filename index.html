@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>vCard QR Generator</title>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #333;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .generate-btn {
+            background: #111;
+            color: #fff;
+        }
+
+        .download-btn {
+            background: #eee;
+            color: #111;
+            display: none;
+        }
+
+        .qr-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            display: none;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 15px;
+            background: #fff;
+        }
+
+        .vcard-preview {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .vcard-preview textarea {
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #777;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>vCard QR Generator</h1>
+
+    <p class="subtitle">
+        Create a QR code that contains your contact information.
+    </p>
+
+    <div class="form-group">
+        <label for="name">Full Name *</label>
+        <input
+            type="text"
+            id="name"
+            placeholder="Your Name"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="designation">Designation</label>
+        <input
+            type="text"
+            id="designation"
+            placeholder="Your Designation"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="company">Company</label>
+        <input
+            type="text"
+            id="company"
+            placeholder="Company Name"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="phone">Phone</label>
+        <input
+            type="tel"
+            id="phone"
+            placeholder="+8801XXXXXXXXX"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input
+            type="email"
+            id="email"
+            placeholder="your@email.com"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="website">Website</label>
+        <input
+            type="url"
+            id="website"
+            placeholder="https://example.com"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="linkedin">LinkedIn</label>
+        <input
+            type="url"
+            id="linkedin"
+            placeholder="https://linkedin.com/in/yourname"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="address">Address</label>
+        <textarea
+            id="address"
+            placeholder="Your address"
+        ></textarea>
+    </div>
+
+    <button
+        class="generate-btn"
+        onclick="generateQRCode()"
+    >
+        Generate vCard QR
+    </button>
+
+
+    <div class="qr-section" id="qrSection">
+
+        <h2>Your QR Code</h2>
+
+        <div id="qrcode"></div>
+
+        <button
+            class="download-btn"
+            id="downloadBtn"
+            onclick="downloadQR()"
+        >
+            Download QR Code
+        </button>
+
+        <div class="vcard-preview">
+
+            <label>vCard Data</label>
+
+            <textarea
+                id="vcardData"
+                readonly
+            ></textarea>
+
+        </div>
+
+    </div>
+
+    <div class="note">
+        Your contact information is processed in your browser.
+        It is not submitted to a server by this page.
+    </div>
+
+</div>
+
+
+<script>
+
+    function escapeVCard(value) {
+
+        if (!value) {
+            return "";
+        }
+
+        return value
+            .replace(/\\/g, "\\\\")
+            .replace(/\n/g, "\\n")
+            .replace(/;/g, "\\;")
+            .replace(/,/g, "\\,");
+    }
+
+
+    function generateQRCode() {
+
+        const name = document
+            .getElementById("name")
+            .value
+            .trim();
+
+        const designation = document
+            .getElementById("designation")
+            .value
+            .trim();
+
+        const company = document
+            .getElementById("company")
+            .value
+            .trim();
+
+        const phone = document
+            .getElementById("phone")
+            .value
+            .trim();
+
+        const email = document
+            .getElementById("email")
+            .value
+            .trim();
+
+        const website = document
+            .getElementById("website")
+            .value
+            .trim();
+
+        const linkedin = document
+            .getElementById("linkedin")
+            .value
+            .trim();
+
+        const address = document
+            .getElementById("address")
+            .value
+            .trim();
+
+
+        if (!name) {
+
+            alert("Please enter your full name.");
+
+            return;
+        }
+
+
+        /*
+         * Build vCard
+         */
+
+        let vcard = "";
+
+        vcard += "BEGIN:VCARD\r\n";
+        vcard += "VERSION:3.0\r\n";
+
+        vcard += "FN:" +
+            escapeVCard(name) +
+            "\r\n";
+
+
+        if (designation) {
+
+            vcard += "TITLE:" +
+                escapeVCard(designation) +
+                "\r\n";
+        }
+
+
+        if (company) {
+
+            vcard += "ORG:" +
+                escapeVCard(company) +
+                "\r\n";
+        }
+
+
+        if (phone) {
+
+            vcard += "TEL;TYPE=CELL:" +
+                escapeVCard(phone) +
+                "\r\n";
+        }
+
+
+        if (email) {
+
+            vcard += "EMAIL;TYPE=INTERNET:" +
+                escapeVCard(email) +
+                "\r\n";
+        }
+
+
+        if (website) {
+
+            vcard += "URL:" +
+                escapeVCard(website) +
+                "\r\n";
+        }
+
+
+        if (linkedin) {
+
+            vcard += "X-SOCIALPROFILE;TYPE=linkedin:" +
+                escapeVCard(linkedin) +
+                "\r\n";
+        }
+
+
+        if (address) {
+
+            vcard += "ADR;TYPE=WORK:;;" +
+                escapeVCard(address) +
+                ";;;;\r\n";
+        }
+
+
+        vcard += "END:VCARD";
+
+
+        /*
+         * Show vCard data
+         */
+
+        document
+            .getElementById("vcardData")
+            .value = vcard;
+
+
+        /*
+         * Remove previous QR
+         */
+
+        const qrContainer =
+            document.getElementById("qrcode");
+
+        qrContainer.innerHTML = "";
+
+
+        /*
+         * Generate QR
+         */
+
+        new QRCode(qrContainer, {
+
+            text: vcard,
+
+            width: 300,
+
+            height: 300,
+
+            correctLevel: QRCode.CorrectLevel.M
+
+        });
+
+
+        /*
+         * Show QR section
+         */
+
+        document
+            .getElementById("qrSection")
+            .style.display = "block";
+
+
+        /*
+         * Show download button
+         */
+
+        document
+            .getElementById("downloadBtn")
+            .style.display = "block";
+    }
+
+
+    function downloadQR() {
+
+        const canvas =
+            document.querySelector("#qrcode canvas");
+
+        const image =
+            document.querySelector("#qrcode img");
+
+
+        let dataURL;
+
+
+        if (canvas) {
+
+            dataURL =
+                canvas.toDataURL("image/png");
+
+        } else if (image) {
+
+            dataURL =
+                image.src;
+
+        } else {
+
+            alert("QR code not found.");
+
+            return;
+        }
+
+
+        const link =
+            document.createElement("a");
+
+        link.href = dataURL;
+
+        link.download =
+            "my-vcard-qr.png";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+    }
+
+</script>
+
+</body>
+</html>
